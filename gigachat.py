@@ -34,17 +34,37 @@ class GigaChat_impl:
         format_instructions = output_parser.get_format_instructions()
         print(format_instructions)
 
-        template_string = """Ты - помощник, способный курировать содержание курса, придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы. \
-        You come up with catchy and memorable brand names.
+        template_string = """Ты - помощник, способный курировать содержание курса. \
+        Ты можешь придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы
 
-        Take the brand description below delimited by triple backticks and use it to create the name for a brand. 
+        Возьми название курса. 
 
-        brand description: ```{brand_description}```
+        course name: ```{user_prompt}```
 
         then based on the description and you hot new brand name give the brand a score 1-10 for how likely it is to succeed. В ответе верни массив, состоящий из JSON объектов глав.
 
         {format_instructions}
         """
+        prompt = ChatPromptTemplate.from_template(template=template_string)
+
+        messages = prompt.format_messages(user_prompt=user_prompt, 
+                                        format_instructions=format_instructions)
+
+        print(messages[0].content)
+
+        
+        response = self.giga(messages)
+        response_as_dict = output_parser.parse(response.content)
+        response_as_dict
+    
+        print(e)
+
+        # WHAT WE WANT TO GET
+        """[
+            { title: 'functions', chapters: [ [Object], [Object], [Object] ] },
+            { title: 'classes', chapters: [ [Object], [Object], [Object] ] },
+            { title: 'decorators', chapters: [ [Object], [Object], [Object] ] }
+        ]"""
 
         # OUTPUT FORMAT
         """{
@@ -72,4 +92,6 @@ class GigaChat_impl:
     async def call_gigachat(self, action, user_prompt):
         if action == 'createUnitsNChapters':
             return await self.createUnitsNChapters(user_prompt)
+        elif action == 'createKandinskyPrompt':
+            return await self.createKandinskyPrompt()
         
