@@ -50,13 +50,10 @@ class GigaChat_impl:
         response_as_dict = output_parser.parse(response.content)
         print(response_as_dict)
 
-        units_list = units.split(",")
+        
 
         result = []
-
-        print(response_as_dict)
-
-        units_list = units.split(",")
+        
 
         # Get the chapters from the response_as_dict
         chapters_list = list(response_as_dict.values())
