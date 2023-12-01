@@ -65,6 +65,7 @@ class GigaChat_impl:
         result_json = json.dumps(result, indent=4)
 
         print(result_json)
+        return result_json
 
         # WHAT WE WANT TO GET
         """[
