@@ -14,18 +14,18 @@ class GigaChat_impl:
         #SYSTEM "Ты - помощник, способный курировать содержание курса, придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы. В ответе верни массив, состоящий из JSON объектов глав."
         print(title)
         print(units)
-
-        # Define the ResponseSchema for the title
-
-
-        # Define the ResponseSchema for the chapter
-        #chapter_schema = ResponseSchema(name='chapter', description='A chapter in the course', type='string')
+        print(len(units))
 
         # Define the ResponseSchema for the chapters
-        chapters_schema = ResponseSchema(name='chapters', description='The chapters of the course', type='List[Chapter]')
+        #units_schema = ResponseSchema(name='title', description='название раздела', type='string')
+        chapters_schema1 = ResponseSchema(name='chapters1', description='3 главы 1-го раздела', type='List[{youtube_search_query: string, chapter_title: string}]')
+        chapters_schema2 = ResponseSchema(name='chapters2', description='3 главы 2-го раздела', type='List[{youtube_search_query: string, chapter_title: string}]')
+        chapters_schema3 = ResponseSchema(name='chapters3', description='3 главы 3-го раздела', type='List[{youtube_search_query: string, chapter_title: string}]')
 
-        response_schemas = [#,
-                            chapters_schema,
+        response_schemas = [#units_schema,
+                            chapters_schema1,
+                            chapters_schema2,
+                            chapters_schema3
                             ]
 
         output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
@@ -33,11 +33,11 @@ class GigaChat_impl:
         print(format_instructions)
 
         template_string = """Ты - помощник, способный курировать содержание курса. \
-        Ты можешь придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы
+        Ты можешь придумывать соответствующие названия глав и придумывать поисковые запросы youtube для каждоый главы
 
         Твоя задача - создать курс о ```{title}``` 
-        Сгенерируй главы под каждый раздел: ```{units}``` 
-        Затем для каждой главы сгенерируй поисковый запрос в youtube и название главы.
+        У тебя есть разделы курса ```{units}``` , тебе нужно сгенерировать для каждого раздела 3 новые главы на отдельные подтемы
+        Затем для каждой главы сгенерируй поисковый запрос в youtube_search_query и название chapter_title.
 
         {format_instructions}
         """
@@ -45,6 +45,7 @@ class GigaChat_impl:
 
         messages = prompt.format_messages(title=title, 
                                             units=units,
+                                            unitsLength=len(units),
                                             format_instructions=format_instructions)
 
         #print(messages[0].content)
@@ -91,4 +92,3 @@ class GigaChat_impl:
             return await self.createUnitsNChapters(title, units)
         elif action == 'createKandinskyPrompt':
             return await self.createKandinskyPrompt()
-        
