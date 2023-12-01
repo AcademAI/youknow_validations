@@ -5,6 +5,8 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chat_models.gigachat import GigaChat
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 
+import json
+
 class GigaChat_impl:
     def __init__(self, credentials, scope, verify_ssl_certs):
         
@@ -14,19 +16,16 @@ class GigaChat_impl:
         #SYSTEM "Ты - помощник, способный курировать содержание курса, придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы. В ответе верни массив, состоящий из JSON объектов глав."
         print(title)
         print(units)
-        print(len(units))
+        units_list = units.split(",")
+        print(len(units_list))
+
+        response_schemas = []
 
         # Define the ResponseSchema for the chapters
         #units_schema = ResponseSchema(name='title', description='название раздела', type='string')
-        chapters_schema1 = ResponseSchema(name='chapters1', description='3 главы 1-го раздела', type='List[{youtube_search_query: string, chapter_title: string}]')
-        chapters_schema2 = ResponseSchema(name='chapters2', description='3 главы 2-го раздела', type='List[{youtube_search_query: string, chapter_title: string}]')
-        chapters_schema3 = ResponseSchema(name='chapters3', description='3 главы 3-го раздела', type='List[{youtube_search_query: string, chapter_title: string}]')
-
-        response_schemas = [#units_schema,
-                            chapters_schema1,
-                            chapters_schema2,
-                            chapters_schema3
-                            ]
+        for i, unit in enumerate(units_list, start=1):
+            chapters_schema = ResponseSchema(name=f'chapters{i}', description=f'3 главы {i}-го раздела', type='List[{youtube_search_query: string, chapter_title: string}]')
+            response_schemas.append(chapters_schema)
 
         output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
         format_instructions = output_parser.get_format_instructions()
@@ -42,20 +41,33 @@ class GigaChat_impl:
         {format_instructions}
         """
         prompt = ChatPromptTemplate.from_template(template=template_string)
-
         messages = prompt.format_messages(title=title, 
                                             units=units,
                                             unitsLength=len(units),
                                             format_instructions=format_instructions)
-
-        #print(messages[0].content)
-
         
         response = self.giga(messages)
         response_as_dict = output_parser.parse(response.content)
         print(response_as_dict)
-    
-        
+
+        units_list = units.split(",")
+
+        result = []
+
+        print(response_as_dict)
+
+        units_list = units.split(",")
+
+        # Get the chapters from the response_as_dict
+        chapters_list = list(response_as_dict.values())
+
+        # Map the units to the chapters by order
+        result = [{"title": unit, "chapters": chapters} for unit, chapters in zip(units_list, chapters_list)]
+
+        # Convert the result to JSON
+        result_json = json.dumps(result, indent=4)
+
+        print(result_json)
 
         # WHAT WE WANT TO GET
         """[
@@ -83,7 +95,6 @@ class GigaChat_impl:
 
     async def createKandinskyPrompt(self):
         # "Ты - помощник, способный курировать содержание курса, придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы. В ответе верни массив, состоящий из JSON объектов глав."
-        
         pass
         
 
@@ -92,3 +103,4 @@ class GigaChat_impl:
             return await self.createUnitsNChapters(title, units)
         elif action == 'createKandinskyPrompt':
             return await self.createKandinskyPrompt()
+        
