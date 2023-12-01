@@ -7,10 +7,8 @@ from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 
 class GigaChat_impl:
     def __init__(self, credentials, scope, verify_ssl_certs):
-        self.credentials = credentials
-        self.scope = scope
-        self.verify_ssl_certs = verify_ssl_certs
-        self.giga = GigaChat(credentials=self.credentials, scope=self.scope, verify_ssl_certs=self.verify_ssl_certs)
+        
+        self.giga = GigaChat(credentials=credentials, scope=scope, verify_ssl_certs=verify_ssl_certs)
 
     async def createUnitsNChapters(self, user_prompt):
         #SYSTEM "Ты - помощник, способный курировать содержание курса, придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы. В ответе верни массив, состоящий из JSON объектов глав."
@@ -32,7 +30,7 @@ class GigaChat_impl:
 
         output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
         format_instructions = output_parser.get_format_instructions()
-        print(format_instructions)
+        #print(format_instructions)
 
         template_string = """Ты - помощник, способный курировать содержание курса. \
         Ты можешь придумывать соответствующие названия глав и находить подходящие видеоролики на youtube для каждой главы
@@ -50,14 +48,14 @@ class GigaChat_impl:
         messages = prompt.format_messages(user_prompt=user_prompt, 
                                         format_instructions=format_instructions)
 
-        print(messages[0].content)
+        #print(messages[0].content)
 
         
         response = self.giga(messages)
         response_as_dict = output_parser.parse(response.content)
-        response_as_dict
+        print(response_as_dict)
     
-        print(e)
+        
 
         # WHAT WE WANT TO GET
         """[

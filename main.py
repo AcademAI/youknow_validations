@@ -5,7 +5,7 @@ from flask_cors import CORS
 from asyncio import run
 import tenacity
 
-from gigachat import GigaChat_impl
+from ggchat import GigaChat_impl
 from kandinsky import Kadninsky_impl
 from dotenv import load_dotenv
 
