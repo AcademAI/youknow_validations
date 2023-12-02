@@ -89,6 +89,7 @@ class GigaChat_impl:
         
         response = self.giga(messages)
         response_as_dict = output_parser.parse(response.content)
+        print(response.content)
         print(response_as_dict)
 
         # Convert the result to JSON
@@ -99,11 +100,45 @@ class GigaChat_impl:
         # What we get here
         """[ { image_search_term: 'a good search term for the title of the course' } ]"""
         
+    async def createYoutubeSummary(self, transcript):
+        response_schemas = []
+        chapters_schema = ResponseSchema(name=f'summary', description=f'краткое содержание транскрипта', type='{summary: your_summary}')
+        response_schemas.append(chapters_schema)
 
+        output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+        format_instructions = output_parser.get_format_instructions()
+        print(format_instructions)
 
-    async def call_gigachat(self, action, title, units):
+        template_string = """Опиши кратко и своими словами, не более 250 слов, о чем идет речь в тексте:\
+
+         ```{transcript}``` 
+
+        
+        {format_instructions}
+        """
+        prompt = ChatPromptTemplate.from_template(template=template_string)
+        messages = prompt.format_messages(transcript=transcript, 
+                                            format_instructions=format_instructions)
+        
+        response = self.giga(messages)
+        summary = response.content
+        summary = json.dumps({"summary": summary})
+        response_as_dict = output_parser.parse(summary)
+        print(response_as_dict)
+
+        # Convert the result to JSON
+        result_json = json.dumps(response_as_dict, indent=4)
+
+        return result_json
+
+        # What we get here
+        """[ { summary: 'краткое содержание видео' } ]"""
+
+    async def call_gigachat(self, action, title, units, transcript):
         if action == 'createUnitsNChapters':
             return await self.createUnitsNChapters(title, units)
         elif action == 'createImageSearchTerm':
             return await self.createImageSearchTerm(title)
+        elif action == 'createYoutubeSummary':
+            return await self.createYoutubeSummary(transcript)
         

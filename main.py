@@ -29,8 +29,8 @@ class Server:
     def setup_routes(self):
         
         @self.app.route('/call_gigachat', methods=['GET', 'OPTIONS'])
-        def createUnitsNChapters():
-            result = run(self.gigachat.call_gigachat(request.args.get('action'), request.args.get('title'), request.args.get('units')))
+        def call_gigachat():
+            result = run(self.gigachat.call_gigachat(request.args.get('action'), request.args.get('title'), request.args.get('units'), request.args.get('transcript')))
             return jsonify(result)
 
         @self.app.route('/call_kandinsky', methods=['GET', 'OPTIONS'])
