@@ -4,6 +4,9 @@ import requests
 from PIL import Image
 from io import BytesIO
 import base64
+import pyimgur
+import os
+
 
 class Kadninsky_impl:
 
@@ -14,14 +17,15 @@ class Kadninsky_impl:
             'X-Secret': f'Secret {secret_key}',
         }
 
-    def get_model(self):
+    async def get_model(self):
         response = requests.get(self.URL + 'key/api/v1/models', headers=self.AUTH_HEADERS)
         data = response.json()
         return data[0]['id']
 
-    def generate(self, prompt, model, images=1, width=1024, height=1024):
+    async def generate(self, prompt, model, images=1, width=512, height=512):
         params = {
             "type": "GENERATE",
+            "style": "ANIME",
             "numImages": images,
             "width": width,
             "height": height,
@@ -38,7 +42,7 @@ class Kadninsky_impl:
         data = response.json()
         return data['uuid']
 
-    def check_generation(self, request_id, attempts=10, delay=10):
+    async def check_generation(self, request_id, attempts=10, delay=10):
         while attempts > 0:
             response = requests.get(self.URL + 'key/api/v1/text2image/status/' + request_id, headers=self.AUTH_HEADERS)
             data = response.json()
@@ -48,14 +52,20 @@ class Kadninsky_impl:
             attempts -= 1
             time.sleep(delay)
 
+    async def call_kandinsky(self, prompt, IMGUR_CLIENT_ID):
+        
+        imgur = pyimgur.Imgur(IMGUR_CLIENT_ID)
+        model_id = await self.get_model()
+        uuid = await self.generate(prompt, model_id)
+        images = await self.check_generation(uuid)
 
-if __name__ == '__main__':
-    api = Kadninsky_impl('https://api-key.fusionbrain.ai/', '588158C56C8F10CEFF2D0D3B18F01619', '88EF9C3B72EFA6061718AD88C468D36B')
-    model_id = api.get_model()
-    input = str(input("Enter text: "))
-    uuid = api.generate(input, model_id)
-    images = api.check_generation(uuid)
-    print(images)
-    image_bytes = base64.b64decode(images[0])
-    image = Image.open(BytesIO(image_bytes))
-    image.save('image.png', format='PNG')
+        image_bytes = base64.b64decode(images[0])
+        image = Image.open(BytesIO(image_bytes))
+        image.save('image.png', format='PNG')
+        image_path = 'image.png'
+        uploaded_image = imgur.upload_image(image_path, title="Uploaded with PyImgur")
+        image_link = uploaded_image.link
+        result_json = json.dumps(image_link, indent=4)
+        os.remove('image.png')
+
+        return result_json

@@ -3,7 +3,6 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from asyncio import run
-import tenacity
 
 from ggchat import GigaChat_impl
 from kandinsky import Kadninsky_impl
@@ -16,6 +15,7 @@ GIGACHAT_CLIENT_SECRET = os.getenv('GIGACHAT_CLIENT_SECRET')
 GIGACHAT_CREDENTIALS = os.getenv('GIGACHAT_CREDENTIALS')
 KANDINSKY_API_KEY = os.getenv('KANDINSKY_API_KEY')
 KADNINSKY_SECRET_KEY = os.getenv('KADNINSKY_SECRET_KEY')
+IMGUR_CLIENT_ID= os.getenv('IMGUR_CLIENT_ID')
 
 
 class Server:
@@ -23,7 +23,7 @@ class Server:
         self.app = Flask(__name__)
         CORS(self.app, origins='http://0.0.0.0:3000')
         self.gigachat = GigaChat_impl(GIGACHAT_CREDENTIALS, 'GIGACHAT_API_PERS', False)
-        self.kandinsky = Kadninsky_impl('https://api.kandinsky.ai/', KANDINSKY_API_KEY, KADNINSKY_SECRET_KEY)
+        self.kandinsky = Kadninsky_impl('https://api-key.fusionbrain.ai/', KANDINSKY_API_KEY, KADNINSKY_SECRET_KEY)
         self.setup_routes()
         
     def setup_routes(self):
@@ -35,7 +35,8 @@ class Server:
 
         @self.app.route('/call_kandinsky', methods=['GET', 'OPTIONS'])
         def call_kandinsky():
-            return jsonify(self.kandinsky.generate(request.args.get('prompt'), request.args.get('model'), request.args.get('images'), request.args.get('width'), request.args.get('height')))
+            result = run(self.kandinsky.call_kandinsky(request.args.get('prompt'), IMGUR_CLIENT_ID))
+            return jsonify(result)
 
     
     def run(self, debug, port, host):
