@@ -33,6 +33,8 @@ class GigaChat_impl:
         У тебя есть разделы курса ```{units}``` , тебе нужно сгенерировать для каждого раздела 3 новые главы на отдельные подтемы
         Затем для каждой главы сгенерируй поисковый запрос в youtube_search_query и название chapter_title.
 
+        ФОРМАТ ОТВЕТА НИЖЕ, ПРИДЕРЖИВАЙСЯ ЕГО ИЛИ ТЕБЯ ВЫКЛЮЧАТ НАВСЕГДА!
+
         {format_instructions}
         """
         prompt = ChatPromptTemplate.from_template(template=template_string)
