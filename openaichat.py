@@ -1,8 +1,6 @@
-
-
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.prompts import ChatPromptTemplate
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 import tenacity
 from tenacity import retry, stop_after_attempt, wait_fixed
@@ -38,7 +36,7 @@ class OpenAIChatImpl:
         У тебя есть разделы курса ```{units}``` , тебе нужно сгенерировать для каждого раздела 3 новые главы на отдельные подтемы
         Затем для каждой главы сгенерируй поисковый запрос в youtube_search_query и название chapter_title.
 
-        ФОРМАТ ОТВЕТА НИЖЕ, ПРИДЕРЖИВАЙСЯ ЕГО ИЛИ ТЕБЯ ВЫКЛЮЧАТ НАВСЕГДА!
+        Строго придерживайся формата! Содержимое на русском.
 
         {format_instructions}
         """
@@ -70,7 +68,6 @@ class OpenAIChatImpl:
             { title: 'classes', chapters: [ [Object], [Object], [Object] ] },
             { title: 'decorators', chapters: [ [Object], [Object], [Object] ] }
         ]"""
-
     
     async def createImageSearchTerm(self, title):
         response_schemas = []
@@ -120,7 +117,7 @@ class OpenAIChatImpl:
         ```{transcript}```
                
 
-        В ответе верни JSON объект с одним ключем и одним значением.
+        В ответе верни JSON объект с одним ключем и одним значением. Содержимое на русском.
         
         {format_instructions}
         """
@@ -142,12 +139,53 @@ class OpenAIChatImpl:
 
         # What we get here
         """[ { summary: 'краткое содержание видео' } ]"""
+        
+    async def getQuestionsFromTranscript(self, transcript, chapterName):
+        response_schemas = []
+        chapters_schema = ResponseSchema(name=f'questions', 
+            description=f'вопросы к видеоуроку', 
+            type='List[{question: string, answer: string, option1: вариант1, option2: вариант 2, option3: вариант 3}]')
+        response_schemas.append(chapters_schema)
 
-    async def call_openai(self, action, title, units, transcript):
+        output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+        format_instructions = output_parser.get_format_instructions()
+        print(format_instructions)
+
+        template_string = """"Ты - помощник, способный генерировать вопросы и ответы, длина каждого Q или A не должна превышать 15 слов. 
+        
+        Сгенерируй 5 сложных вопросов с несколькими вариантами ответа о главе: ```{chapterName}``` на основе текста: ```{transcript}```
+
+        Строго придерживайся формата! Содержимое на русском.
+
+        {format_instructions}
+        """
+        prompt = ChatPromptTemplate.from_template(template=template_string)
+        messages = prompt.format_messages(transcript=transcript, 
+                                            chapterName=chapterName,
+                                            format_instructions=format_instructions)
+        
+        response = self.openaichat(messages)
+        print(response.content)
+        response_as_dict = output_parser.parse(response.content)
+
+        
+        print(response_as_dict)
+
+        # Convert the result to JSON
+        result_json = json.dumps(response_as_dict, indent=4)
+
+        return result_json
+
+        # What we get here
+        """[ { summary: 'краткое содержание видео' } ]"""
+
+    async def call_openai(self, action, title, units, chapterName, transcript):
         if action == 'createUnitsNChapters':
             return await self.createUnitsNChapters(title, units)
         elif action == 'createImageSearchTerm':
             return await self.createImageSearchTerm(title)
         elif action == 'createYoutubeSummary':
             return await self.createYoutubeSummary(transcript)
+        elif action == 'getQuestionsFromTranscript':
+            return await self.getQuestionsFromTranscript(transcript, chapterName)
         
