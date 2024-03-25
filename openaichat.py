@@ -71,7 +71,7 @@ class OpenAIChatImpl:
     
     async def createImageSearchTerm(self, title):
         response_schemas = []
-        chapters_schema = ResponseSchema(name=f'image_search_term', description=f'a good prompt for course thumbnail generation', type='{image_search_term: string}')
+        chapters_schema = ResponseSchema(name=f'image_search_term', description=f'a good prompt for course thumbnail generation', type='prompt')
         response_schemas.append(chapters_schema)
 
         output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
@@ -81,7 +81,7 @@ class OpenAIChatImpl:
         template_string = """You are an assistant capable of evaluating the best prompt for course thumbnail generation. \
         Please provide a good prompt for midjourney to generate a good image about: ```{title}``` 
 
-        Return a JSON object with only 1 key and 1 value, nothing else.
+        Return a valid JSON object with only 1 key and 1 value.
 
         {format_instructions}
         """
@@ -90,12 +90,14 @@ class OpenAIChatImpl:
                                             format_instructions=format_instructions)
         
         response = self.openaichat(messages)
+        #print(response.content)
         response_as_dict = output_parser.parse(response.content)
-        print(response.content)
+       #print(response.content)
         print(response_as_dict)
 
         # Convert the result to JSON
         result_json = json.dumps(response_as_dict, indent=4)
+        
 
         return result_json
 
