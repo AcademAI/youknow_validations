@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
-
+ 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 KANDINSKY_API_KEY = os.getenv('KANDINSKY_API_KEY')
 KADNINSKY_SECRET_KEY = os.getenv('KADNINSKY_SECRET_KEY')
