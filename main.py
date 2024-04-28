@@ -1,6 +1,6 @@
 import logging
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from asyncio import run
 from openaichat import OpenAIChatImpl
@@ -33,7 +33,7 @@ class Server:
 
         @self.app.route('/call_openai', methods=['GET', 'OPTIONS'])
         def call_openai():
-            result = run(self.openaichat.call_openai(request.args.get('action'), request.args.get('title'), request.args.get('units'), request.args.get('chapterName'), request.args.get('transcript')))
+            result = run(self.openaichat.call_openai(request.args.get('action'), request.args.get('title'), request.args.get('units'), request.args.get('chapterName'), request.args.get('transcript'), request.args.get('policies')))
             return jsonify(result)
 
         @self.app.route('/call_kandinsky', methods=['GET', 'OPTIONS'])

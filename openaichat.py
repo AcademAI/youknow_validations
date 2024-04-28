@@ -17,6 +17,7 @@ class OpenAIChatImpl:
         temperature=0.1, 
         max_retries=3)
 
+
     async def createUnitsNChapters(self, title, units):
         units_list = units.split(",")
         response_schemas = []
@@ -27,10 +28,9 @@ class OpenAIChatImpl:
 
         output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
         format_instructions = output_parser.get_format_instructions()
-        print(format_instructions)
 
         template_string = """Ты - помощник, способный курировать содержание курса. \
-        Ты можешь придумывать соответствующие названия глав и придумывать поисковые запросы youtube для каждоый главы
+        Ты можешь придумывать соответствующие названия глав и придумывать поисковые запросы youtube для каждой главы
 
         Твоя задача - создать курс о ```{title}``` 
         У тебя есть разделы курса ```{units}``` , тебе нужно сгенерировать для каждого раздела 3 новые главы на отдельные подтемы
@@ -181,7 +181,48 @@ class OpenAIChatImpl:
         # What we get here
         """[ { summary: 'краткое содержание видео' } ]"""
 
-    async def call_openai(self, action, title, units, chapterName, transcript):
+    async def checkResult(self, title, units, policies):
+
+        summary = title + ' ' + units
+        response_schemas = []
+        chapters_schema = ResponseSchema(name=f'decision', description=f'decision about publishing', type='true/false')
+        response_schemas.append(chapters_schema)
+        output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+        format_instructions = output_parser.get_format_instructions()
+
+        template_string = """Ты - помощник, способный проверить решение о публикации курса. \
+        Твоя задача - проверить текст ```{summary}``` на любое содержание или/и намек на наличие запрещенных тематик из списка: \
+        ```{policies}```.
+
+        В случае соответствия текста запрещенным тематикам в ответе верни false, иначе верни true. \
+
+        В ответе верни JSON объект с одним ключем и одним значением.
+
+        {format_instructions}
+        """
+        prompt = ChatPromptTemplate.from_template(template=template_string)
+        messages = prompt.format_messages(summary=summary,
+                                            policies=policies, 
+                                            format_instructions=format_instructions)
+        
+        response = self.openaichat(messages)
+        
+        response_as_dict = output_parser.parse(response.content)
+        result_json = json.dumps(response_as_dict, indent=4)
+
+        return result_json
+
+        # What we get here
+        """
+        [
+            {
+                "decision": true/false
+            }
+        ]
+        """
+
+
+    async def call_openai(self, action, title, units, chapterName, transcript, policies):
         if action == 'createUnitsNChapters':
             return await self.createUnitsNChapters(title, units)
         elif action == 'createImageSearchTerm':
@@ -190,4 +231,5 @@ class OpenAIChatImpl:
             return await self.createYoutubeSummary(transcript)
         elif action == 'getQuestionsFromTranscript':
             return await self.getQuestionsFromTranscript(transcript, chapterName)
-        
+        elif action =='checkResult':
+            return await self.checkResult(title, units, policies)
