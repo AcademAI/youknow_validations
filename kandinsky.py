@@ -15,7 +15,6 @@ class Kadninsky_impl:
             'X-Key': f'Key {api_key}',
             'X-Secret': f'Secret {secret_key}',
         }
-
     async def get_model(self):
         response = requests.get(self.URL + 'key/api/v1/models', headers=self.AUTH_HEADERS)
         data = response.json()
