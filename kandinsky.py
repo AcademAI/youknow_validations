@@ -9,7 +9,6 @@ import os
 
 
 class Kadninsky_impl:
-
     def __init__(self, url, api_key, secret_key):
         self.URL = url
         self.AUTH_HEADERS = {
